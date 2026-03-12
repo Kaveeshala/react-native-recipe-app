@@ -1,21 +1,51 @@
 import { Image } from "expo-image";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { View, Text, ScrollView, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
+import { API_URL } from "../../constants/api";
 
 const RegisterScreen = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-  const handleRegister = () => {
-    if (password !== confirmPassword) {
-      console.log("Passwords do not match");
+  const handleRegister = async () => {
+    if (!name || !email || !password || !confirmPassword) {
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
-    console.log("Register:", name, email, password);
-    // connect to backend
+
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert("Error", data.message);
+        return;
+      }
+
+      Alert.alert("Success", "Account created! Please sign in.");
+      router.replace("/(auth)/sign-in");
+
+    } catch (error) {
+      Alert.alert("Error", "Cannot connect to server. Check your network.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -24,22 +54,21 @@ const RegisterScreen = () => {
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
     >
-
       <View className="bg-orange-50 items-center pt-16 pb-10 rounded-b-[50px]">
-        <Image
-          source={require("../../assets/images/loginpag.jpg")}
-          style={{ width: 220, height: 220 }}
-          contentFit="cover"
-        />
+        <View className="rounded-full overflow-hidden" style={{ width: 220, height: 220 }}>
+          <Image
+            source={require("../../assets/images/loginpag.jpg")}
+            style={{ width: 220, height: 220 }}
+            contentFit="cover"
+          />
+        </View>
         <Text className="text-gray-500 mt-6 text-base font-medium">
           Create Your Account
         </Text>
       </View>
 
-      {/* Form Section */}
       <View className="px-6 pt-10 flex-1">
 
-        {/* Full Name */}
         <View className="mb-4">
           <Text className="text-gray-700 font-semibold mb-2">Full Name</Text>
           <TextInput
@@ -52,7 +81,6 @@ const RegisterScreen = () => {
           />
         </View>
 
-        {/* Email */}
         <View className="mb-4">
           <Text className="text-gray-700 font-semibold mb-2">Email</Text>
           <TextInput
@@ -66,7 +94,6 @@ const RegisterScreen = () => {
           />
         </View>
 
-        {/* Password */}
         <View className="mb-4">
           <Text className="text-gray-700 font-semibold mb-2">Password</Text>
           <TextInput
@@ -79,7 +106,6 @@ const RegisterScreen = () => {
           />
         </View>
 
-        {/* Confirm Password */}
         <View className="mb-6">
           <Text className="text-gray-700 font-semibold mb-2">Confirm Password</Text>
           <TextInput
@@ -92,15 +118,18 @@ const RegisterScreen = () => {
           />
         </View>
 
-        {/* Register Button */}
         <TouchableOpacity
-          className="bg-orange-500 rounded-2xl py-4 items-center shadow-md"
+          className="bg-orange-500 rounded-2xl py-4 items-center"
           onPress={handleRegister}
+          disabled={loading}
         >
-          <Text className="text-white font-bold text-lg">Create Account</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text className="text-white font-bold text-lg">Create Account</Text>
+          )}
         </TouchableOpacity>
 
-        {/* Sign In Link */}
         <View className="flex-row justify-center mt-6 mb-10">
           <Text className="text-gray-500">Already have an account? </Text>
           <Link href="/(auth)/sign-in">
