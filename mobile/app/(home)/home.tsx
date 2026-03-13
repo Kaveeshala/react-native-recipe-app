@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { API_URL } from "../../constants/api";
-import AddRecipeScreen from "../(recipes)/add-recipe";
+
 
 // Type
 type Recipe = {
@@ -27,6 +27,7 @@ type Recipe = {
 
 // Recipe Card Component
 const RecipeCard = ({ item }: { item: Recipe }) => {
+  const router = useRouter();
   const imageSource =
     item.image_url && item.image_url.startsWith("http")
       ? { uri: item.image_url }
@@ -42,6 +43,7 @@ const RecipeCard = ({ item }: { item: Recipe }) => {
         shadowRadius: 4,
         elevation: 2,
       }}
+      onPress={() => router.push(`/(recipes)/${item.id}`)}
     >
       {/* Recipe Image */}
       <Image source={imageSource} className="w-full h-44" resizeMode="cover" />
