@@ -1,8 +1,17 @@
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert } from "react-native";
-import { API_URL } from '../../constants/api'
+import {
+  View,
+  Text,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { API_URL } from "../../constants/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SignInScreen = () => {
   const [email, setEmail] = useState("");
@@ -15,6 +24,8 @@ const SignInScreen = () => {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
+
+    
 
     setLoading(true);
     try {
@@ -31,9 +42,10 @@ const SignInScreen = () => {
         return;
       }
 
+      await AsyncStorage.setItem("user", JSON.stringify(data.user));
+
       Alert.alert("Success", `Welcome back, ${data.user.name}!`);
       router.replace("/(home)/home");
-
     } catch (error) {
       Alert.alert("Error", "Cannot connect to server. Check your network.");
     } finally {
@@ -48,7 +60,10 @@ const SignInScreen = () => {
       keyboardShouldPersistTaps="handled"
     >
       <View className=" items-center pt-16 pb-10 rounded-b-[50px]">
-        <View className="rounded-full overflow-hidden" style={{ width: 220, height: 220 }}>
+        <View
+          className="rounded-full overflow-hidden"
+          style={{ width: 220, height: 220 }}
+        >
           <Image
             source={require("../../assets/images/recipe_image.jpg")}
             style={{ width: 220, height: 220 }}
@@ -61,7 +76,6 @@ const SignInScreen = () => {
       </View>
 
       <View className="px-6 pt-10 flex-1">
-
         <View className="mb-4">
           <Text className="text-gray-700 font-semibold mb-2">Email</Text>
           <TextInput
@@ -109,7 +123,6 @@ const SignInScreen = () => {
             <Text className="text-orange-500 font-medium">Sign Up</Text>
           </Link>
         </View>
-
       </View>
     </ScrollView>
   );
