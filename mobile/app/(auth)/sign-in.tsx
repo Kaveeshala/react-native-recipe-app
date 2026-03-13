@@ -47,15 +47,15 @@ const SignInScreen = () => {
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
     >
-      <View className="bg-orange-50 items-center pt-16 pb-10 rounded-b-[50px]">
+      <View className=" items-center pt-16 pb-10 rounded-b-[50px]">
         <View className="rounded-full overflow-hidden" style={{ width: 220, height: 220 }}>
           <Image
-            source={require("../../assets/images/loginpag.jpg")}
+            source={require("../../assets/images/recipe_image.jpg")}
             style={{ width: 220, height: 220 }}
             contentFit="cover"
           />
         </View>
-        <Text className="text-gray-500 mt-6 text-base font-medium">
+        <Text className="text-black mt-6 text-2xl font-medium">
           Welcome Back
         </Text>
       </View>
