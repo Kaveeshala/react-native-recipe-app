@@ -1,4 +1,4 @@
-import { createRecipe, getAllRecipes } from "../models/recipe.model.js";
+import { createRecipe, getAllRecipes, getRecipeById } from "../models/recipe.model.js";
 
 // GET all recipes
 const getRecipes = async (req, res) => {
@@ -42,4 +42,18 @@ const addRecipe = async (req, res) => {
   }
 };
 
-export { getRecipes, addRecipe };
+// GET single recipe by ID
+const getRecipe = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const recipe = await getRecipeById(id); 
+    if (!recipe) {
+      return res.status(404).json({ message: "Recipe not found" });
+    }
+    res.status(200).json(recipe);
+  } catch (error) {
+    console.error("Get recipe error:", error.message);
+    res.status(500).json({ message: "Server error fetching recipe" });
+  }
+};
+export { getRecipes, addRecipe, getRecipe };

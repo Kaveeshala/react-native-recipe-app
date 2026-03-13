@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
-import { getRecipes, addRecipe } from "../controllers/recipe.controller.js";
+import { getRecipes, addRecipe, getRecipe } from "../controllers/recipe.controller.js";
 
 const router = express.Router();
 
@@ -18,5 +18,6 @@ const upload = multer({ storage });
 
 router.get("/", getRecipes);
 router.post("/", upload.single("image"), addRecipe);
+router.get("/:id", getRecipe )
 
 export default router;

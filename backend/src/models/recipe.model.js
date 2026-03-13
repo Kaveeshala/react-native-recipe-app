@@ -17,4 +17,13 @@ const getAllRecipes = async () => {
   return result.rows;
 };
 
-export { createRecipe, getAllRecipes };
+//get one recipe by ID
+const getRecipeById = async (id) => {
+  const result = await pool.query(
+    "SELECT * FROM recipes WHERE id = $1",
+    [id]
+  );
+  return result.rows[0];
+};
+
+export { createRecipe, getAllRecipes, getRecipeById };
