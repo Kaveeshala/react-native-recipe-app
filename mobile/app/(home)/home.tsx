@@ -1,58 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   FlatList,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
+import { API_URL } from "../../constants/api";
+import AddRecipeScreen from "../(recipes)/add-recipe";
 
-// ---- Dummy Data ----
-const DUMMY_RECIPES = [
-  {
-    id: 1,
-    title: "Spaghetti Bolognese",
-    description: "A classic Italian pasta dish with rich meat sauce and fresh tomatoes.",
-    image_url: "https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=400",
-    category: "Italian",
-    cooking_time: 45,
-  },
-  {
-    id: 2,
-    title: "Chicken Curry",
-    description: "Creamy and flavorful chicken curry with aromatic spices and coconut milk.",
-    image_url: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400",
-    category: "Asian",
-    cooking_time: 35,
-  },
-  {
-    id: 3,
-    title: "Avocado Toast",
-    description: "Simple and healthy breakfast with creamy avocado on toasted sourdough.",
-    image_url: "https://images.unsplash.com/photo-1588137378633-dea1336ce1e2?w=400",
-    category: "Breakfast",
-    cooking_time: 10,
-  },
-  {
-    id: 4,
-    title: "Beef Tacos",
-    description: "Crispy tacos filled with seasoned beef, fresh salsa, and melted cheese.",
-    image_url: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400",
-    category: "Mexican",
-    cooking_time: 25,
-  },
-  {
-    id: 5,
-    title: "Margherita Pizza",
-    description: "Classic wood-fired pizza with fresh mozzarella, tomato, and basil.",
-    image_url: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400",
-    category: "Italian",
-    cooking_time: 30,
-  },
-];
-
-// ---- Type ----
+// Type
 type Recipe = {
   id: number;
   title: string;
@@ -62,77 +25,167 @@ type Recipe = {
   cooking_time: number;
 };
 
-// ---- Recipe Card Component ----
-const RecipeCard = ({ item }: { item: Recipe }) => (
-  <TouchableOpacity className="bg-white rounded-2xl mb-4 border border-gray-100 overflow-hidden"
-    style={{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.08,
-      shadowRadius: 4,
-      elevation: 2,
-    }}
-  >
-    {/* Recipe Image */}
-    <Image
-      source={{ uri: item.image_url }}
-      className="w-full h-44"
-      resizeMode="cover"
-    />
+// Recipe Card Component
+const RecipeCard = ({ item }: { item: Recipe }) => {
+  const imageSource =
+    item.image_url && item.image_url.startsWith("http")
+      ? { uri: item.image_url }
+      : { uri: `${API_URL}/${item.image_url}` };
 
-    {/* Recipe Info */}
-    <View className="p-4">
+  return (
+    <TouchableOpacity
+      className="bg-white rounded-2xl mb-4 border border-gray-100 overflow-hidden"
+      style={{
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+        elevation: 2,
+      }}
+    >
+      {/* Recipe Image */}
+      <Image source={imageSource} className="w-full h-44" resizeMode="cover" />
 
-      {/* Category Badge */}
-      <View className="bg-orange-100 self-start px-3 py-1 rounded-full mb-2">
-        <Text className="text-orange-500 text-xs font-semibold">
-          {item.category}
+      {/* Recipe Info */}
+      <View className="p-4">
+        {/* Category Badge */}
+        <View className="bg-orange-100 self-start px-3 py-1 rounded-full mb-2">
+          <Text className="text-orange-500 text-xs font-semibold">
+            {item.category}
+          </Text>
+        </View>
+
+        {/* Title */}
+        <Text className="text-gray-800 text-lg font-bold mb-1">
+          {item.title}
         </Text>
-      </View>
 
-      {/* Title */}
-      <Text className="text-gray-800 text-lg font-bold mb-1">
-        {item.title}
-      </Text>
-
-      {/* Description */}
-      <Text className="text-gray-500 text-sm" numberOfLines={2}>
-        {item.description}
-      </Text>
-
-      {/* Cooking Time */}
-      <View className="flex-row items-center mt-3">
-        <Ionicons name="time-outline" size={14} color="#9ca3af" />
-        <Text className="text-gray-400 text-xs ml-1">
-          {item.cooking_time} mins
+        {/* Description */}
+        <Text className="text-gray-500 text-sm" numberOfLines={2}>
+          {item.description}
         </Text>
+
+        {/* Cooking Time */}
+        <View className="flex-row items-center mt-3">
+          <Ionicons name="time-outline" size={14} color="#9ca3af" />
+          <Text className="text-gray-400 text-xs ml-1">
+            {item.cooking_time} mins
+          </Text>
+        </View>
       </View>
+    </TouchableOpacity>
+  );
+};
 
-    </View>
-  </TouchableOpacity>
-);
-
-// ---- Home Screen ----
 export default function HomeScreen() {
+  const router = useRouter();
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+
+  const fetchRecipes = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/recipes`);
+      const data = await response.json();
+      setRecipes(data);
+      setError("");
+    } catch (err) {
+      setError("Failed to load recipes.");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Fetch on first load
+  useEffect(() => {
+    fetchRecipes();
+  }, []);
+
+  // Re-fetch every time user comes back to this screen
+  useFocusEffect(
+    useCallback(() => {
+      fetchRecipes();
+    }, []),
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchRecipes();
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
       <View className="flex-1 px-5 pt-4">
-
         {/* Header */}
-        <View className="mb-6">
-          <Text className="text-gray-400 text-base">Hello, Chef 👋</Text>
-          <Text className="text-gray-800 text-3xl font-bold mt-1">Recipes</Text>
+        <View className="flex-row items-center justify-between mb-6">
+          <View>
+            <Text className="text-gray-800 text-3xl font-bold mt-1">
+              Recipes
+            </Text>
+          </View>
+
+          {/* Add Recipe Button */}
+          <TouchableOpacity
+            className="bg-orange-500 w-11 h-11 rounded-full items-center justify-center"
+            onPress={() => router.push("/(recipes)/add-recipe")}
+          >
+            <Ionicons name="add" size={26} color="#fff" />
+          </TouchableOpacity>
         </View>
 
-        {/* Recipe List */}
-        <FlatList
-          data={DUMMY_RECIPES}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => <RecipeCard item={item} />}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 20 }}
-        />
+        {/* Loading State */}
+        {loading && (
+          <View className="flex-1 items-center justify-center">
+            <ActivityIndicator size="large" color="#f97316" />
+            <Text className="text-gray-400 mt-3">Loading recipes...</Text>
+          </View>
+        )}
 
+        {/* Error State */}
+        {!loading && error !== "" && (
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-red-400 text-base text-center">{error}</Text>
+            <TouchableOpacity
+              className="mt-4 bg-orange-500 px-6 py-3 rounded-2xl"
+              onPress={fetchRecipes}
+            >
+              <Text className="text-white font-bold">Try Again</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Empty State */}
+        {!loading && error === "" && recipes.length === 0 && (
+          <View className="flex-1 items-center justify-center">
+            <Text className="text-5xl mb-4">🍽️</Text>
+            <Text className="text-gray-500 text-base text-center">
+              No recipes yet.
+            </Text>
+            <Text className="text-gray-400 text-sm text-center mt-1">
+              Tap + to add your first recipe!
+            </Text>
+          </View>
+        )}
+
+        {/* Recipe List */}
+        {!loading && error === "" && recipes.length > 0 && (
+          <FlatList
+            data={recipes}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => <RecipeCard item={item} />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#f97316"
+              />
+            }
+          />
+        )}
       </View>
     </SafeAreaView>
   );
