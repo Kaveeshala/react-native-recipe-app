@@ -62,4 +62,19 @@ const login = async (req, res) => {
   }
 };
 
-export { register, login };
+// Save push token
+const savePushToken = async (req, res) => {
+  const { user_id, push_token } = req.body;
+  try {
+    await pool.query(
+      "UPDATE users SET push_token = $1 WHERE id = $2",
+      [push_token, user_id]
+    );
+    res.status(200).json({ message: "Push token saved" });
+  } catch (error) {
+    console.error("Save push token error:", error.message);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export { register, login, savePushToken };

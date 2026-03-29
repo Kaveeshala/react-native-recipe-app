@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { API_URL } from "../../constants/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { registerPushToken } from "../../utils/registerPushToken";
 
 const SignInScreen = () => {
   const [email, setEmail] = useState("");
@@ -25,10 +26,10 @@ const SignInScreen = () => {
       return;
     }
 
-    
-
     setLoading(true);
     try {
+        const test = await fetch(`http://192.168.0.196:5001`);
+    console.log("Test fetch status:", test.status);
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,16 +39,42 @@ const SignInScreen = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        Alert.alert("Error", data.message);
+        Alert.alert("Error", data.message || "Login failed");
         return;
       }
 
       await AsyncStorage.setItem("user", JSON.stringify(data.user));
 
-      Alert.alert("Success", `Welcome back, ${data.user.name}!`);
+      // Isolate push token — don't let it break login
+      try {
+        await registerPushToken(data.user.id);
+      } catch (pushError) {
+        console.log("Push token registration failed:", pushError);
+      }
+
       router.replace("/(home)/home");
     } catch (error) {
-      Alert.alert("Error", "Cannot connect to server. Check your network.");
+      // Show the real error instead of a generic message
+      console.log("Full error:", JSON.stringify(error));
+      console.log(
+        "Error message:",
+        error instanceof Error ? error.message : String(error),
+      );
+      if (
+        error instanceof TypeError &&
+        error.message.includes("Network request failed")
+      ) {
+        Alert.alert(
+          "Network Error",
+          `Cannot reach server at ${API_URL}. Make sure your backend is running.`,
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          error instanceof Error ? error.message : String(error),
+        );
+      }
+      console.log("Login error details:", error);
     } finally {
       setLoading(false);
     }

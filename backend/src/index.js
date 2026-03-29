@@ -8,6 +8,7 @@ import authRoutes from "./routes/auth.routes.js";
 import recipeRoutes from "./routes/recipe.routes.js";
 import fs from "fs";
 import reviewRoutes from "./routes/review.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/recipes", recipeRoutes);
 app.use("/api/recipes/:recipeId/reviews", reviewRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Test route
 app.get("/", async (req, res) => {

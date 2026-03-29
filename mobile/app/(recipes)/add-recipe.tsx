@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { Image } from "expo-image";
 import { API_URL } from "@/constants/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AddRecipeScreen() {
   const router = useRouter();
@@ -66,6 +67,15 @@ export default function AddRecipeScreen() {
       Alert.alert("Error", "Please fill in all fields");
       return;
     }
+
+    // Get logged in user
+  const userStr = await AsyncStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+
+  if (!user) {
+    Alert.alert("Login required", "Please log in to add a recipe");
+    return;
+  }
 
     setLoading(true);
     try {
